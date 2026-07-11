@@ -18,7 +18,11 @@ namespace LogiTrack.Controllers
         [HttpGet]
         public async Task<IActionResult> GetOrders()
         {
-            var orders = await _context.Orders.ToListAsync();
+            var orders = await _context.Orders
+                .Include(o => o.Items)
+                .AsNoTracking()
+                .ToListAsync();
+
             return Ok(orders);
         }
 
@@ -27,7 +31,8 @@ namespace LogiTrack.Controllers
         {
             var order = _context.Orders
                 .Include(o => o.Items)
-                .FirstOrDefault(o => o.OrderId == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.OrderId == id);
 
              if (order == null)
                 return NotFound();
@@ -50,7 +55,7 @@ namespace LogiTrack.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrder(int id)
         {
-            var order = _context.Orders.Find(id);
+            var order = await _context.Orders.FindAsync(id);
 
             if (order == null)
             {

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using LogiTrack.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.EntityFrameworkCore;
 namespace LogiTrack.Controllers
 {
     [Authorize]
@@ -9,17 +11,29 @@ namespace LogiTrack.Controllers
     public class InventoryController : ControllerBase
     {
         private readonly LogiTrackContext _context;
-
-        public InventoryController(LogiTrackContext context)
+        private readonly IMemoryCache _cache;
+        public InventoryController(LogiTrackContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         // GET: /api/inventory
         [HttpGet]
         public async Task<IActionResult> GetInventory()
         {
-            var items = _context.InventoryItems.ToList();
+            const string cacheKey = "inventory_items";
+
+            if (!_cache.TryGetValue(cacheKey, out List<InventoryItem>? items))
+            {
+                items = await _context.InventoryItems.ToListAsync();
+
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromSeconds(30));
+
+                _cache.Set(cacheKey, items, cacheOptions);
+            }
+
             return Ok(items);
         }
 
