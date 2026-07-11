@@ -15,7 +15,7 @@ namespace LogiTrack.Controllers
 
         // GET: /api/inventory
         [HttpGet]
-        public IActionResult GetInventory()
+        public async Task<IActionResult> GetInventory()
         {
             var items = _context.InventoryItems.ToList();
             return Ok(items);
@@ -23,17 +23,17 @@ namespace LogiTrack.Controllers
 
         // POST: /api/inventory
         [HttpPost]
-        public IActionResult AddInventoryItem([FromBody] InventoryItem item)
+        public async Task<IActionResult> AddInventoryItem([FromBody] InventoryItem item)
         {
             _context.InventoryItems.Add(item);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetInventory), new { id = item.ItemId }, item);
         }
 
         // DELETE: /api/inventory/{id}
         [HttpDelete("{id}")]
-        public IActionResult DeleteInventoryItem(int id)
+        public async Task<IActionResult> DeleteInventoryItem(int id)
         {
             var item = _context.InventoryItems.Find(id);
 
@@ -43,7 +43,7 @@ namespace LogiTrack.Controllers
             }
 
             _context.InventoryItems.Remove(item);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
