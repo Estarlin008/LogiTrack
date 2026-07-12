@@ -24,16 +24,16 @@ namespace LogiTrack.Controllers
         {
             const string cacheKey = "inventory_items";
 
-            if (!_cache.TryGetValue(cacheKey, out List<InventoryItem>? items))
+            var items = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
-                items = await _context.InventoryItems.ToListAsync();
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                entry.SlidingExpiration = TimeSpan.FromMinutes(5);
 
-                var cacheOptions = new MemoryCacheEntryOptions()
-                    .SetAbsoluteExpiration(TimeSpan.FromSeconds(30));
-
-                _cache.Set(cacheKey, items, cacheOptions);
-            }
-
+                return await _context.InventoryItems
+                    .AsNoTracking()
+                    .ToListAsync();
+            });
+            
             return Ok(items);
         }
 
